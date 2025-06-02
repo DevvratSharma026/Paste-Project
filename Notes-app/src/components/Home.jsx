@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToPastes, updateToPaste } from '../redux/pasteSlice';
+import { FiSave, FiEdit } from 'react-icons/fi';
 
 const Home = () => {
   const [title, setTitle] = useState('');
@@ -11,70 +12,77 @@ const Home = () => {
   const dispatch = useDispatch();
   const allPastes = useSelector((state) => state.paste.pastes);
 
-   //if pasteId is present, it means we are updating the paste
-   useEffect(() => {
-    if(pasteId) {
+  useEffect(() => {
+    if (pasteId) {
       const paste = allPastes.find((paste) => paste._id === pasteId);
-      setTitle(paste.title);
-      setValue(paste.content);
+      setTitle(paste?.title || '');
+      setValue(paste?.content || '');
     }
-  }, [pasteId])
+  }, [pasteId]);
 
-
-  //this will create a new paste and send it to the slice
   function createPaste() {
+    if (!title.trim() || !value.trim()) return;
+
     const paste = {
       title: title,
-      content: value, 
+      content: value,
       _id: pasteId || Date.now().toString(36),
       createdAt: new Date().toISOString(),
-    }
+    };
 
-    if(pasteId) {
-      //update paste  
+    if (pasteId) {
       dispatch(updateToPaste(paste));
-    }
-    else {
-      //create paste
+    } else {
       dispatch(addToPastes(paste));
     }
 
-    //after creation or updation, reset the form
     setTitle('');
     setValue('');
     setSearchParams({});
   }
 
   return (
-    <div>
-      <div className='flex flex-row gap-6 place-content-between'>
+    <div className="max-w-4xl mx-auto p-4">
+      <h1 className="text-2xl font-bold text-gray-100 mb-6">
+        {pasteId ? 'Edit Paste' : 'Create New Paste'}
+      </h1>
+
+      <div className="mb-6">
         <input
-          className='p-1 rounded-xl mt-2 bg-black w-[66%] pl-4'
-          type='text'
-          placeholder='enter title here'
+          className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          type="text"
+          placeholder="Enter title here"
           value={title}
-          onChange={(e) => setTitle(e.target.value)} />
-
-        <button 
-          onClick={createPaste}
-          className='p-2 rounded-xl mt-2 bg-black'>
-          {
-            pasteId ? 'Update My Paste' : 'Create My Paste'
-          }
-        </button>
+          onChange={(e) => setTitle(e.target.value)}
+        />
       </div>
 
-      <div className='mt-8'>
-        <textarea 
-          className='border rounded-2xl mt-4 min-w-[500px] p-4'
+      <div className="mb-6">
+        <textarea
+          className="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={value}
-          placeholder='enter your text here'
+          placeholder="Enter your text here"
           onChange={(e) => setValue(e.target.value)}
-          rows={20}
-          />
+          rows={15}
+        />
       </div>
-    </div>
-  )
-}
 
-export default Home
+      <button
+        onClick={createPaste}
+        className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-medium"
+      >
+        {pasteId ? (
+          <>
+            <FiEdit className="mr-2" /> Update Paste
+          </>
+        ) : (
+          <>
+            <FiSave className="mr-2" /> Create Paste
+          </>
+        )}
+      </button>
+    </div>
+  );
+};
+
+export default Home;

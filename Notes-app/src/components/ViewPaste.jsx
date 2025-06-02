@@ -1,48 +1,74 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { addToPastes, updateToPaste } from '../redux/pasteSlice';
+import { useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { Prism as SyntaxHighlighter } from 'prism-react-renderer';
+import { FiCopy, FiShare2, FiChevronLeft } from 'react-icons/fi';
+import { toast } from 'react-hot-toast';
 
 const ViewPage = () => {
-
-  const {id} = useParams();
+  const { id } = useParams();
   const allPastes = useSelector((state) => state.paste.pastes);
   const paste = allPastes.find((paste) => paste._id === id);
-  const [title, setTitle] = useState(paste.title);
-  const [value, setValue] = useState(paste.content);
+  const [title, setTitle] = useState(paste?.title || '');
+  const [value, setValue] = useState(paste?.content || '');
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value);
+    toast.success('Copied to clipboard!');
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: title,
+        text: value,
+        url: window.location.href
+      }).catch(() => toast.error('Share cancelled'));
+    } else {
+      toast.error('Web Share API not supported');
+    }
+  };
+
+  if (!paste) return <div className="p-4 text-red-400">Paste not found</div>;
 
   return (
-    <div>
-      <div className='flex flex-row gap-6 place-content-between'>
-        <input
-          className='p-1 rounded-xl mt-2 bg-black w-[66%] pl-4'
-          type='text'
-          placeholder='enter title here'
-          value={title}
-          disabled={true}
-          onChange={(e) => setTitle(e.target.value)} />
-
-        {/* <button 
-          onClick={createPaste}
-          className='p-2 rounded-xl mt-2 bg-black'>
-          {
-            pasteId ? 'Update My Paste' : 'Create My Paste'
-          }
-        </button> */}
+    <div className="max-w-4xl mx-auto p-4">
+      <div className="flex items-center mb-6">
+        <a href="/" className="flex items-center text-blue-400 hover:text-blue-300 mr-4">
+          <FiChevronLeft className="mr-1" /> Back
+        </a>
+        <h1 className="text-2xl font-bold text-gray-100">{title}</h1>
       </div>
 
-      <div className='mt-8'>
-        <textarea 
-          className='border rounded-2xl mt-4 min-w-[500px] p-4'
-          value={value}
-          disabled={true}
-          placeholder='enter your text here'
-          onChange={(e) => setValue(e.target.value)}
-          rows={20}
-          />
+      <div className="bg-gray-800 rounded-lg p-4 mb-4">
+        <div className="flex justify-between items-center mb-4">
+          <span className="text-sm text-gray-400">
+            Created: {new Date(paste.createdAt).toLocaleString()}
+          </span>
+          <div className="flex space-x-2">
+            <button
+              onClick={handleCopy}
+              className="flex items-center px-3 py-1 bg-gray-700 rounded hover:bg-gray-600 text-gray-200"
+            >
+              <FiCopy className="mr-1" /> Copy
+            </button>
+            <button
+              onClick={handleShare}
+              className="flex items-center px-3 py-1 bg-gray-700 rounded hover:bg-gray-600 text-gray-200"
+            >
+              <FiShare2 className="mr-1" /> Share
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-gray-900 rounded p-4 overflow-auto">
+          <pre className="text-gray-100 font-mono text-sm whitespace-pre-wrap">
+            {value}
+          </pre>
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ViewPage
+export default ViewPage;
